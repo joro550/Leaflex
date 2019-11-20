@@ -1,33 +1,52 @@
+using System;
 using Xunit;
-using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
 using System.Threading.Tasks;
-using Amazon.Runtime;
+using Xunit.Abstractions;
 
 namespace Leaflex.Web.Tests
 {
     public class UnitTest1
     {
+        private readonly ITestOutputHelper _testOutputHelper;
+
+        public UnitTest1(ITestOutputHelper testOutputHelper)
+        {
+            _testOutputHelper = testOutputHelper;
+        }
+
         [Fact]
         public async Task Test1()
         {
-            var config = new AmazonS3Config
+            using var s3Client = new AmazonS3Client(new AmazonS3Config
             {
-                UseHttp = true, 
-                ForcePathStyle = true,
                 ServiceURL = "http://localhost:4572",
-                RegionEndpoint = RegionEndpoint.USEast1
-            };
+                ForcePathStyle = true,
+            });
 
-            var credentials = new AnonymousAWSCredentials();
-            using var client = new AmazonS3Client(credentials, config);
+//            var bucket = await s3Client.PutBucketAsync(new PutBucketRequest
+//            {
+//                BucketName = "test",
+//                UseClientRegion = true
+//            });
 
-            await client.PutBucketAsync(new PutBucketRequest {BucketName = "myBucket"});
+            ListBucketsResponse response = null;
+            try
+            {
+                response = await s3Client.ListBucketsAsync();
+                foreach (var bucket in response.Buckets)
+                {
+                    _testOutputHelper.WriteLine(bucket.BucketName);
+                }
 
-            var buckets = client.ListBucketsAsync();
+            }
+            catch (Exception e)
+            {
 
+            }
 
+            Assert.Single(response.Buckets);
         }
     }
 }
